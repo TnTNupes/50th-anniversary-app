@@ -9,3 +9,4 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(app); // Initialize Firestore
 export const auth = getAuth(app);
 export default app;
+
