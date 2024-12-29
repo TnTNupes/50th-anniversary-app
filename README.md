@@ -17,21 +17,3 @@
     ```bash
     yarn dev
     ```
-
-# Testing in Vercel
-
-1. Install vercel locally; only need to do it once
-
-    ```bash
-    npm install -g vercel
-    ```
-1. Start the app
-
-    ```bash
-    vercel
-    ```
-1. Copy the site that it gives you and paste in your browser
-
-    ```bash
-    https://50th-anniversary-m934nl7v6-brian-ndofors-projects.vercel.app/
-    ```
