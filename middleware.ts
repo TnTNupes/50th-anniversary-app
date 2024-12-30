@@ -1,23 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { authProtectedPages } from "./authProtectedPages";
+import { authProtectedPages, publicPages } from "./authProtectedPages";
 import { cookies } from "next/headers";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const cookieList = await cookies();
+  const authUser = cookieList.get("authUser");
 
   // Only allow unauthenticated users to access specific pages
   console.log({ pathname });
-  if (!authProtectedPages.includes(pathname)) {
+  if (
+    !authProtectedPages.includes(pathname) ||
+    (!authUser && !publicPages.includes(pathname))
+  ) {
     return NextResponse.next();
   }
 
-  const cookieList = await cookies();
-  const authUser = cookieList.get("authUser");
-  const { uid } = JSON.parse(authUser.value);
+  console.log({ authUser });
 
   try {
     // Make an API call to verify user status
+    const { uid } = JSON.parse(authUser.value);
     const res = await fetch(`${req.nextUrl.origin}/api/verify-user`, {
       method: "POST",
       headers: {

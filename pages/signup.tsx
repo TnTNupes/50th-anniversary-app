@@ -70,7 +70,7 @@ const signUpFormFields = [
   },
 ];
 
-const NewUserForm = ({ handleSubmit, onSubmit, register }) => (
+const NewUserForm = ({ handleSubmit, onSubmit, register, logout }) => (
   <form onSubmit={handleSubmit(onSubmit)}>
     <VStack gap={4}>
       {newUserFormFields.map((field) => (
@@ -80,13 +80,20 @@ const NewUserForm = ({ handleSubmit, onSubmit, register }) => (
         </FormControl>
       ))}
       <Button type="submit">Sign Up</Button>
+      <Button onClick={logout}>Go Back</Button>
     </VStack>
   </form>
 );
 
 const SignUpForm = ({ handleSubmit, onSubmit, register, signInWithGoogle }) => (
   <VStack gap={4}>
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form
+      onSubmit={() => {
+        console.log("sign up with email");
+        debugger;
+        handleSubmit(onSubmit)();
+      }}
+    >
       <VStack gap={4}>
         {signUpFormFields.map((field) => (
           <FormControl key={field.name} isRequired={field.required}>
@@ -94,7 +101,7 @@ const SignUpForm = ({ handleSubmit, onSubmit, register, signInWithGoogle }) => (
             <Input type={field.type} {...register(field.name as any)} />
           </FormControl>
         ))}
-        <Button type="submit">Sign Up</Button>
+        <Button type="submit">Sign Up With Email</Button>
       </VStack>
     </form>
     <Button onClick={signInWithGoogle}>Sign Up with Google</Button>
@@ -112,9 +119,9 @@ export default function SignUp() {
   });
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register: signUpRegister,
+    handleSubmit: signUpHandleSubmit,
+    formState: { errors: signUpErrors },
   } = useForm({
     resolver: yupResolver(signUpSchema),
   });
@@ -122,12 +129,13 @@ export default function SignUp() {
   const { user, authUser, signUp, createUser, signInWithGoogle, logout } =
     useAuth();
 
-  const onSubmit = async (data: SignUpCredentials) => {
+  const onSignUpSubmit = (data: SignUpCredentials) => {
     console.log({ data });
+    debugger;
     signUp(data);
   };
 
-  const onNewUserSubmit = async (data: NewUser) => {
+  const onNewUserSubmit = (data: NewUser) => {
     console.log({ data });
     createUser(data);
   };
@@ -151,12 +159,13 @@ export default function SignUp() {
               handleSubmit={newUserHandleSubmit}
               onSubmit={onNewUserSubmit}
               register={newUserRegister}
+              logout={logout}
             />
           ) : (
             <SignUpForm
-              handleSubmit={handleSubmit}
-              onSubmit={onSubmit}
-              register={register}
+              handleSubmit={signUpHandleSubmit}
+              onSubmit={onSignUpSubmit}
+              register={signUpRegister}
               signInWithGoogle={signInWithGoogle}
             />
           )}
