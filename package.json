@@ -22,6 +22,7 @@
     "next-themes": "^0.4.3",
     "nookies": "^2.5.2",
     "react": "^18.2.0",
+    "react-big-calendar": "^1.17.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.53.2",
     "webpack": "^5.97.1",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^12.12.21",
     "@types/react": "^17.0.2",
+    "@types/react-big-calendar": "^1.16.0",
     "@types/react-dom": "^17.0.1",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
