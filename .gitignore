@@ -38,4 +38,6 @@ next-env.d.ts
 .env
 
 utils/config.ts
+./utils/config.ts
+config.ts
 utils/tntnupes-8a29b-firebase-adminsdk-3zscc-0c74acb270.json
