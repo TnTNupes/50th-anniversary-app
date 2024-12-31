@@ -6,14 +6,22 @@ import {
   FormLabel,
   Heading,
   VStack,
+  Text,
+  Center,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  Select,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useAuth } from "../context/AuthContext";
 import { NewUser, SignUpCredentials } from "../types/user";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { LINEAGE } from "../utils/lineage";
 
 const newUserSchema = yup.object().shape({
   firstName: yup.string().required("First name is required"),
@@ -33,7 +41,7 @@ const newUserSchema = yup.object().shape({
 const signUpSchema = yup.object().shape({
   email: yup.string().required("Email Address is required"),
   password: yup.string().required("Password required"),
-  confirmPassword: yup.number().required("Please Confirm Password"),
+  confirmPassword: yup.string().required("Please Confirm Password"),
 });
 
 const newUserFormFields = [
@@ -43,7 +51,8 @@ const newUserFormFields = [
   {
     label: "Year of When You Crossed",
     name: "yearCrossed",
-    type: "text",
+    type: "select",
+    options: LINEAGE,
     required: true,
   },
   { label: "Line Name", name: "lineName", type: "text", required: false },
@@ -67,23 +76,51 @@ const signUpFormFields = [
   },
 ];
 
-const NewUserForm = ({ handleSubmit, onSubmit, register }) => (
+const NewUserForm = ({ handleSubmit, onSubmit, register, logout, errors }) => (
   <form onSubmit={handleSubmit(onSubmit)}>
     <VStack gap={4}>
       {newUserFormFields.map((field) => (
         <FormControl key={field.name} isRequired={field.required}>
           <FormLabel>{field.label}</FormLabel>
-          <Input type={field.type} {...register(field.name as any)} />
+          {field.type === "text" && (
+            <Input type={field.type} {...register(field.name as any)} />
+          )}
+          {field.type === "number" && (
+            <Input type={field.type} {...register(field.name as any)} />
+          )}
+          {field.type === "select" && (
+            <Select {...register(field.name as any)}>
+              {field.options.map((option) => (
+                <option key={option.name} value={option.name}>
+                  {option.name}
+                </option>
+              ))}
+            </Select>
+          )}
         </FormControl>
       ))}
+
+      {errors.message && (
+        <Alert status="error">
+          <AlertIcon />
+          <AlertTitle>{errors.message}</AlertTitle>
+        </Alert>
+      )}
       <Button type="submit">Sign Up</Button>
+      <Button onClick={logout}>Go Back</Button>
     </VStack>
   </form>
 );
 
-const SignUpForm = ({ handleSubmit, onSubmit, register, signInWithGoogle }) => (
+const SignUpForm = ({
+  handleSubmit,
+  onSubmit,
+  register,
+  signInWithGoogle,
+  errors,
+}) => (
   <VStack gap={4}>
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form>
       <VStack gap={4}>
         {signUpFormFields.map((field) => (
           <FormControl key={field.name} isRequired={field.required}>
@@ -91,7 +128,13 @@ const SignUpForm = ({ handleSubmit, onSubmit, register, signInWithGoogle }) => (
             <Input type={field.type} {...register(field.name as any)} />
           </FormControl>
         ))}
-        <Button type="submit">Sign Up</Button>
+        {errors.message && (
+          <Alert status="error">
+            <AlertIcon />
+            <AlertTitle>{errors.message}</AlertTitle>
+          </Alert>
+        )}
+        <Button onClick={handleSubmit(onSubmit)}>Sign Up With Email</Button>
       </VStack>
     </form>
     <Button onClick={signInWithGoogle}>Sign Up with Google</Button>
@@ -100,6 +143,7 @@ const SignUpForm = ({ handleSubmit, onSubmit, register, signInWithGoogle }) => (
 
 export default function SignUp() {
   const router = useRouter();
+  const [apiError, setApiError] = useState(null);
   const {
     register: newUserRegister,
     handleSubmit: newUserHandleSubmit,
@@ -109,48 +153,76 @@ export default function SignUp() {
   });
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register: signUpRegister,
+    handleSubmit: signUpHandleSubmit,
+    formState: { errors: signUpErrors },
   } = useForm({
     resolver: yupResolver(signUpSchema),
   });
 
-  const { user, authUser, signUp, createUser, signInWithGoogle } = useAuth();
+  const { user, authUser, signUp, createUser, signInWithGoogle, logout } =
+    useAuth();
 
-  const onSubmit = async (data: SignUpCredentials) => {
+  const onSignUpSubmit = async (data: SignUpCredentials) => {
     console.log({ data });
-    signUp(data);
+    try {
+      await signUp(data);
+    } catch (error) {
+      setApiError(error);
+    }
   };
 
   const onNewUserSubmit = async (data: NewUser) => {
     console.log({ data });
-    createUser(data);
+    try {
+      await createUser(data);
+    } catch (error) {
+      setApiError(error);
+    }
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && user.verified) {
+      router.push("/dashboard");
+    } else if (user) {
       router.push("/waiting-for-verification");
+      logout();
     }
   }, [user]);
+
+  console.log({ signUpErrors, newUserErrors });
 
   return (
     <Box p={8}>
       <Heading mb={4}>Sign Up</Heading>
-      {!!authUser ? (
-        <NewUserForm
-          handleSubmit={newUserHandleSubmit}
-          onSubmit={onNewUserSubmit}
-          register={newUserRegister}
-        />
-      ) : (
-        <SignUpForm
-          handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
-          register={register}
-          signInWithGoogle={signInWithGoogle}
-        />
-      )}
+      <Center>
+        <VStack gap={4}>
+          {!!authUser ? (
+            <NewUserForm
+              handleSubmit={newUserHandleSubmit}
+              onSubmit={onNewUserSubmit}
+              register={newUserRegister}
+              logout={logout}
+              errors={newUserErrors || apiError}
+            />
+          ) : (
+            <SignUpForm
+              handleSubmit={signUpHandleSubmit}
+              onSubmit={onSignUpSubmit}
+              register={signUpRegister}
+              signInWithGoogle={signInWithGoogle}
+              errors={signUpErrors || apiError}
+            />
+          )}
+          <Text>
+            Already have an account? Click{" "}
+            <Link href={"/signin"} style={{ textDecoration: "underline" }}>
+              here
+            </Link>{" "}
+            to sign in
+          </Text>
+        </VStack>
+      </Center>
     </Box>
   );
 }
